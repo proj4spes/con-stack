@@ -1,0 +1,41 @@
+{
+  "min_packer_version": "0.12.0",
+  "variables": {
+    "aws_region": "eu-west-1",
+    "consul_version": "1.0.2",
+    "dnsmasq_version": "2.75"
+  },
+  "builders": [
+  {
+    "name": "amazon-linux-ami",
+    "ami_name": "consul-amazon-linux-{{isotime | clean_ami_name}}",
+    "ami_description": "An Amazon Linux AMI that has Consul installed.",
+    "instance_type": "t2.micro",
+    "region": "{{user `aws_region`}}",
+    "type": "amazon-ebs",
+    "source_ami_filter": {
+      "filters": {
+        "virtualization-type": "hvm",
+        "architecture": "x86_64",
+        "name": "ecs-optimized-awscli",
+        "block-device-mapping.volume-type": "gp2",
+        "root-device-type": "ebs"
+      },
+      "owners": ["376128762854"],
+      "most_recent": true
+    },
+    "ssh_username": "ec2-user"
+  }],
+  "provisioners": [{
+    "type": "file",
+    "source": "{{template_dir}}/../../../con-stack",
+    "destination": "/tmp"
+  },{
+    "type": "shell",
+    "inline": [
+      "/tmp/con-stack/modules/install-consul/install-consul --version {{user `consul_version`}}",
+      "/tmp/con-stack/modules/install-dnsmasq/install-dnsmasq"
+    ],
+    "pause_before": "30s"
+  }]
+}
